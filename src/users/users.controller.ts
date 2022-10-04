@@ -14,9 +14,13 @@ export class UsersController {
     const response = await this.userService.registerUser(req);
     return getApiResponse(response);
   }
+
   @Post('login')
-  @UseGuards(AuthGuard('local'))
-  async login(@Req() req: LoginReq, @Res({ passthrough: true }) res: Response) {
+  // @UseGuards(AuthGuard('local'))
+  async login(
+    @Body() req: LoginReq,
+    @Res({ passthrough: true }) res: Response,
+  ) {
     const response = await this.userService.loginUser(req);
     getApiResponse(response);
     const token = await this.userService.getJwtToken(req);
