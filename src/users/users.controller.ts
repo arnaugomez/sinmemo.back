@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Req, Res, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, Res, UseGuards } from '@nestjs/common';
 import { getApiResponse } from 'src/api/ApiResponse';
 import { RegisterReq } from './api/register.req';
 import { UsersService } from './users.service';
