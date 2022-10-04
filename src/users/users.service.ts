@@ -11,6 +11,8 @@ import { RegisterReq } from './api/register.req';
 import { RegisterResErrors } from './api/register.res';
 import { getPasswordHash } from './transformers/getPasswordHash';
 import { User } from './user';
+import { nanoid } from 'nanoid';
+import dayjs from 'dayjs';
 
 @Injectable()
 export class UsersService {
@@ -59,5 +61,15 @@ export class UsersService {
     );
     if (!isValidPassword) return { password: [loginErrors.invalidPassword] };
     return {};
+  }
+
+  public async getRefreshToken(userId: number): Promise<string> {
+    const userDataToUpdate = {
+      token: nanoid(),
+      tokenExp: dayjs().add(1, 'week').format('DD/MM/YYYY'),
+    };
+
+    await this.user.update(userId, userDataToUpdate);
+    return userDataToUpdate.token;
   }
 }
