@@ -1,3 +1,3 @@
 export const registerErrors = {
-  emailExists: 'emailExists',
+  userExists: 'userExists',
 };
