@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { compare } from 'bcrypt';
 import { Repository } from 'typeorm';
@@ -13,7 +14,10 @@ import { User } from './user';
 
 @Injectable()
 export class UsersService {
-  constructor(@InjectRepository(User) private user: Repository<User>) {}
+  constructor(
+    @InjectRepository(User) private user: Repository<User>,
+    private jwtService: JwtService,
+  ) {}
 
   public async registerUser(input: RegisterReq): Promise<RegisterResErrors> {
     const existingUser = await this.user.findOneBy({ email: input.email });
@@ -24,6 +28,26 @@ export class UsersService {
     newUser.password = await getPasswordHash(input.password);
     await this.user.insert(newUser);
     return {};
+  }
+
+  public async validateUserCredentials(
+    email: string,
+    password: string,
+  ): Promise<LoginReq> {
+    const user = await this.user.findOneBy({ email });
+    if (user == null) {
+      return null;
+    }
+    const isValidPassword = await compare(password, user.password);
+    if (!isValidPassword) {
+      return null;
+    }
+
+    return { email, password };
+  }
+
+  public async getJwtToken(user: LoginReq): Promise<string> {
+    return this.jwtService.signAsync({ ...user });
   }
 
   public async loginUser(input: LoginReq): Promise<LoginResErrors> {
