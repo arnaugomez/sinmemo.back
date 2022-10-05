@@ -1,12 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
-import dayjs from 'dayjs';
+import * as dayjs from 'dayjs';
 import { ApiError } from 'src/api/ApiError';
 import { jwtErrors } from 'src/auth/api/jwt.errors';
 import { JwtContents } from 'src/users/api/JwtContents';
 import { User } from 'src/users/user';
 import { Repository } from 'typeorm';
+import { v4 } from 'uuid';
 
 @Injectable()
 export class AuthService {
@@ -17,7 +18,7 @@ export class AuthService {
 
   public async getJwtToken(userId: number): Promise<string> {
     const existingUser = await this.user.findOneBy({ id: userId });
-    let token = existingUser.token ?? 'hello';
+    let token = existingUser.token ?? v4();
     if (
       existingUser.tokenExp &&
       dayjs(existingUser.tokenExp, 'DD/MM/YYYY').isBefore(dayjs())

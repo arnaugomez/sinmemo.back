@@ -28,6 +28,7 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     if (!payload) {
       throw new UnauthorizedException('No JWT token');
     }
+    console.log(payload);
     try {
       await this.authService.validateJwtToken(payload);
     } catch (e) {
