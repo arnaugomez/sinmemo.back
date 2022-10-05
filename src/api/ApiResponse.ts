@@ -4,7 +4,6 @@ export interface ApiResponse<T extends object> {
   errors?: T;
 }
 
-export function getApiResponse<T extends object>(errors: T): ApiResponse<T> {
-  if (!Object.keys(errors).length) return {};
+export function handleApiError<T extends object>(errors: T) {
   throw new HttpException({ errors }, HttpStatus.BAD_REQUEST);
 }

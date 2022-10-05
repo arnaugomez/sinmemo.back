@@ -13,6 +13,8 @@ import { getPasswordHash } from './transformers/getPasswordHash';
 import { User } from './user';
 import { nanoid } from 'nanoid';
 import dayjs from 'dayjs';
+import { ApiError } from 'src/api/ApiError';
+import { JwtContents } from './api/JwtContents';
 
 @Injectable()
 export class UsersService {
@@ -21,15 +23,17 @@ export class UsersService {
     private jwtService: JwtService,
   ) {}
 
-  public async registerUser(input: RegisterReq): Promise<RegisterResErrors> {
+  public async registerUser(input: RegisterReq): Promise<void> {
     const existingUser = await this.user.findOneBy({ email: input.email });
-    if (existingUser) return { email: [registerErrors.userExists] };
+    if (existingUser)
+      throw new ApiError<RegisterResErrors>({
+        email: [registerErrors.userExists],
+      });
 
     const newUser = new User();
     newUser.email = input.email;
     newUser.password = await getPasswordHash(input.password);
     await this.user.insert(newUser);
-    return {};
   }
 
   public async validateUserCredentials(
@@ -48,28 +52,34 @@ export class UsersService {
     return { email, password };
   }
 
-  public async getJwtToken(user: LoginReq): Promise<string> {
-    return this.jwtService.signAsync({ ...user });
-  }
-
-  public async loginUser(input: LoginReq): Promise<LoginResErrors> {
-    const existingUser = await this.user.findOneBy({ email: input.email });
-    if (!existingUser) return { email: [loginErrors.userDoesNotExist] };
-    const isValidPassword = await compare(
-      input.password,
-      existingUser.password,
-    );
-    if (!isValidPassword) return { password: [loginErrors.invalidPassword] };
-    return {};
-  }
-
-  public async getRefreshToken(userId: number): Promise<string> {
+  public async getJwtToken(userId: LoginReq): Promise<string> {
     const userDataToUpdate = {
       token: nanoid(),
       tokenExp: dayjs().add(1, 'week').format('DD/MM/YYYY'),
     };
-
     await this.user.update(userId, userDataToUpdate);
-    return userDataToUpdate.token;
+    return this.jwtService.signAsync({ userId, token: userDataToUpdate.token });
+  }
+
+  public async validateJwtToken(jwt: JwtContents): Promise<void> {
+    const existingUser = await this.user.findOneBy({ id: jwt.userId });
+    if (!existingUser) throw ApiError({});
+  }
+
+  public async loginUser(input: LoginReq): Promise<number> {
+    const existingUser = await this.user.findOneBy({ email: input.email });
+    if (!existingUser)
+      throw new ApiError<LoginResErrors>({
+        email: [loginErrors.userDoesNotExist],
+      });
+    const isValidPassword = await compare(
+      input.password,
+      existingUser.password,
+    );
+    if (!isValidPassword)
+      throw new ApiError<LoginResErrors>({
+        password: [loginErrors.invalidPassword],
+      });
+    return existingUser.id;
   }
 }
