@@ -1,3 +1,3 @@
 export interface RegisterResErrors {
-  email?: string[];
+  email?: string;
 }

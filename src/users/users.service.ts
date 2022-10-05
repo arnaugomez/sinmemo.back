@@ -20,7 +20,7 @@ export class UsersService {
     const existingUser = await this.user.findOneBy({ email: input.email });
     if (existingUser)
       throw new ApiError<RegisterResErrors>({
-        email: [registerErrors.userExists],
+        email: registerErrors.userExists,
       });
 
     const newUser = new User();
@@ -49,7 +49,7 @@ export class UsersService {
     const existingUser = await this.user.findOneBy({ email: input.email });
     if (!existingUser)
       throw new ApiError<LoginResErrors>({
-        email: [loginErrors.userDoesNotExist],
+        email: loginErrors.userDoesNotExist,
       });
     const isValidPassword = await compare(
       input.password,
@@ -57,7 +57,7 @@ export class UsersService {
     );
     if (!isValidPassword)
       throw new ApiError<LoginResErrors>({
-        password: [loginErrors.invalidPassword],
+        password: loginErrors.invalidPassword,
       });
     return existingUser.id;
   }
