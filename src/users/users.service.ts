@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { compare } from 'bcrypt';
+import { ApiError } from 'src/api/ApiError';
 import { Repository } from 'typeorm';
 import { loginErrors } from './api/login.errors';
 import { LoginReq } from './api/login.req';
@@ -11,17 +11,10 @@ import { RegisterReq } from './api/register.req';
 import { RegisterResErrors } from './api/register.res';
 import { getPasswordHash } from './transformers/getPasswordHash';
 import { User } from './user';
-import { nanoid } from 'nanoid';
-import dayjs from 'dayjs';
-import { ApiError } from 'src/api/ApiError';
-import { JwtContents } from './api/JwtContents';
 
 @Injectable()
 export class UsersService {
-  constructor(
-    @InjectRepository(User) private user: Repository<User>,
-    private jwtService: JwtService,
-  ) {}
+  constructor(@InjectRepository(User) private user: Repository<User>) {}
 
   public async registerUser(input: RegisterReq): Promise<void> {
     const existingUser = await this.user.findOneBy({ email: input.email });
@@ -50,20 +43,6 @@ export class UsersService {
     }
 
     return { email, password };
-  }
-
-  public async getJwtToken(userId: LoginReq): Promise<string> {
-    const userDataToUpdate = {
-      token: nanoid(),
-      tokenExp: dayjs().add(1, 'week').format('DD/MM/YYYY'),
-    };
-    await this.user.update(userId, userDataToUpdate);
-    return this.jwtService.signAsync({ userId, token: userDataToUpdate.token });
-  }
-
-  public async validateJwtToken(jwt: JwtContents): Promise<void> {
-    const existingUser = await this.user.findOneBy({ id: jwt.userId });
-    if (!existingUser) throw ApiError({});
   }
 
   public async loginUser(input: LoginReq): Promise<number> {

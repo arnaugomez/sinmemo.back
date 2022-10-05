@@ -1,4 +1,4 @@
-import { HttpException, HttpStatus } from '@nestjs/common';
+import { BadRequestException, UnauthorizedException } from '@nestjs/common';
 
 export class ApiError<T extends object> extends Error {
   response: T;
@@ -7,8 +7,16 @@ export class ApiError<T extends object> extends Error {
     this.response = response;
   }
 
+  private get body() {
+    return { errors: this.response };
+  }
+
   send() {
-    throw new HttpException({ errors: this.response }, HttpStatus.BAD_REQUEST);
+    throw new BadRequestException(this.body);
+  }
+
+  sendUnauthorized() {
+    throw new UnauthorizedException(this.body);
   }
 
   static merge<U extends object>(e: ApiError<any>[]): ApiError<U> {

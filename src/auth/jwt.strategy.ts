@@ -2,12 +2,13 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { Request } from 'express';
 import { ExtractJwt, Strategy } from 'passport-jwt';
-import { JwtContents } from './api/JwtContents';
-import { UsersService } from './users.service';
+import { ApiError } from 'src/api/ApiError';
+import { AuthService } from 'src/auth/auth.service';
+import { JwtContents } from '../users/api/JwtContents';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
-  constructor(private userService: UsersService) {
+  constructor(private authService: AuthService) {
     super({
       ignoreExpiration: false,
       secretOrKey: 'My random secret key never let others',
@@ -27,7 +28,13 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     if (!payload) {
       throw new UnauthorizedException('No JWT token');
     }
-    this.userService.validateJwtToken;
-    return payload; // return req.user
+    try {
+      await this.authService.validateJwtToken(payload);
+    } catch (e) {
+      if (e instanceof ApiError) {
+        e.sendUnauthorized();
+      } else throw e;
+    }
+    return payload.userId; // you can get it later as `req.user`
   }
 }
